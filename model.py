@@ -29,6 +29,7 @@ class LanguageModel(object):
         Build LM from text corpus
         :return: dictionary LM
         """
+        # replaces low frequency words with 'UNK'
         corpus = copy.deepcopy(self.corpus)
         if self.min_freq > 1:
             tokens = {}
@@ -41,12 +42,13 @@ class LanguageModel(object):
                     for i in range(len(corpus)):
                         for j in range(len(corpus[i])):
                             if key == corpus[i][j]: corpus[i][j] = 'UNK'
+        # creates dict of all tokens and returns if the distribution is uniform
         tokens = {}
         if self.unif:
             for line in corpus:
                 for word in line:
                     if not (word in tokens.keys()): tokens[word] = 1
-            return tokens
+        # creates model based on n-gram input
         lm = {}
         for line in corpus:
             for i in range(len(line) - self.n + 1):
@@ -73,10 +75,12 @@ class LanguageModel(object):
         Sort according to ascending alphabet order when multiple words have same frequency
         :return: list[tuple(token, freq)] of top k most common tokens
         """
+        # sorts dictionary of words and returns k most common for uniform, 1-gram distributions
         if self.unif or self.n == 1:
             dlist = self.lm.items()
             dlist = sorted(dlist, key = lambda tup: (-tup[1], tup[0].lower()))
             return dlist[:k]
+        # sorts dictionary of n-grams and returns k most common for n > 1 -gram models
         else:
             dlist = []
             for key1 in self.lm.keys():
@@ -98,6 +102,7 @@ def calculate_perplexity(models, coefs, data):
     """
     newdata = copy.deepcopy(data)
     min_freq = max(models[0].min_freq, models[1].min_freq, models[2].min_freq, models[3].min_freq)
+    # replaces low frequency words with 'UNK'
     if min_freq > 1:
         words = {}
         for line in newdata:
@@ -121,6 +126,7 @@ def calculate_perplexity(models, coefs, data):
         tridict[key] = sum(list(tri[key].values()))
     total = 0
     numwords = 0
+    # calculates probability distribution for each individual model
     for line in newdata:
         numwords += len(line)
         for i in range(len(line)):
